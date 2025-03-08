@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
-import { insertNewsSchema, insertNotificationSchema, insertWeatherSchema, updatePasswordSchema, themeSettingsSchema } from "@shared/schema";
+import { insertNewsSchema, insertNotificationSchema, insertWeatherSchema, updatePasswordSchema, themeSettingsSchema, adSettingsSchema } from "@shared/schema";
 import { z } from "zod";
 import { hashPassword } from './auth'; // Assuming hashPassword function exists in ./auth
 
@@ -186,6 +186,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = insertWeatherSchema.parse(req.body);
       const weather = await storage.updateWeather(validatedData);
       res.status(201).json(weather);
+    } catch (e) {
+      if (e instanceof z.ZodError) {
+        res.status(400).json(e.errors);
+      } else {
+        throw e;
+      }
+    }
+  });
+
+  // Ad Settings Routes
+  app.get("/api/ad-settings", async (_req, res) => {
+    const settings = await storage.getAdSettings();
+    if (!settings) {
+      return res.status(404).send("No ad settings found");
+    }
+    res.json(settings);
+  });
+
+  app.post("/api/ad-settings", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user.isAdmin) {
+      return res.status(403).send("Only admins can update ad settings");
+    }
+
+    try {
+      const validatedData = adSettingsSchema.parse(req.body);
+      const settings = await storage.updateAdSettings(validatedData);
+      res.status(200).json(settings);
     } catch (e) {
       if (e instanceof z.ZodError) {
         res.status(400).json(e.errors);

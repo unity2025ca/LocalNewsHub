@@ -41,6 +41,16 @@ export const themeSettings = pgTable("theme_settings", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+export const adSettings = pgTable("ad_settings", {
+  id: serial("id").primaryKey(),
+  googleAdClient: text("google_ad_client").notNull(),
+  googleAdSlot: text("google_ad_slot").notNull(),
+  isEnabled: boolean("is_enabled").notNull().default(true),
+  width: integer("width").notNull().default(728),
+  height: integer("height").notNull().default(90),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -73,9 +83,18 @@ export const themeSettingsSchema = createInsertSchema(themeSettings).pick({
   logoUrl: true,
 });
 
+export const adSettingsSchema = createInsertSchema(adSettings).pick({
+  googleAdClient: true,
+  googleAdSlot: true,
+  isEnabled: true,
+  width: true,
+  height: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type News = typeof news.$inferSelect;
 export type Notification = typeof notifications.$inferSelect;
 export type Weather = typeof weather.$inferSelect;
 export type ThemeSettings = typeof themeSettings.$inferSelect;
+export type AdSettings = typeof adSettings.$inferSelect;

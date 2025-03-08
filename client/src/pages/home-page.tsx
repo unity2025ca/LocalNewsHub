@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
-import { News, Notification, Weather } from "@shared/schema";
+import { News, Notification, Weather, AdSettings } from "@shared/schema";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,6 +18,7 @@ import {
   Sun,
   Newspaper,
 } from "lucide-react";
+import React from 'react';
 
 export default function HomePage() {
   const { user, logoutMutation } = useAuth();
@@ -33,6 +34,20 @@ export default function HomePage() {
   const { data: weather } = useQuery<Weather>({
     queryKey: ["/api/weather"],
   });
+
+  const { data: adSettings } = useQuery<AdSettings>({
+    queryKey: ["/api/ad-settings"],
+  });
+
+  React.useEffect(() => {
+    if (adSettings?.isEnabled) {
+      const script = document.createElement('script');
+      script.async = true;
+      script.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adSettings.googleAdClient}`;
+      script.crossOrigin = "anonymous";
+      document.head.appendChild(script);
+    }
+  }, [adSettings]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -101,10 +116,10 @@ export default function HomePage() {
                     <CardContent>
                       <p className="whitespace-pre-wrap">{item.content}</p>
                       {item.imageUrl && (
-                        <img 
-                          src={item.imageUrl} 
+                        <img
+                          src={item.imageUrl}
                           alt={item.title}
-                          className="mt-4 rounded-md max-h-48 object-cover" 
+                          className="mt-4 rounded-md max-h-48 object-cover"
                         />
                       )}
                     </CardContent>
@@ -137,6 +152,23 @@ export default function HomePage() {
           </div>
         </div>
       </main>
+
+      {adSettings?.isEnabled && (
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex justify-center">
+            <ins
+              className="adsbygoogle"
+              style={{
+                display: "inline-block",
+                width: `${adSettings.width}px`,
+                height: `${adSettings.height}px`,
+              }}
+              data-ad-client={adSettings.googleAdClient}
+              data-ad-slot={adSettings.googleAdSlot}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

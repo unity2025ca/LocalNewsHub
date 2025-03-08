@@ -1,7 +1,7 @@
 import { useAuth } from "@/hooks/use-auth";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertNewsSchema, insertNotificationSchema, News, User, updatePasswordSchema, themeSettingsSchema } from "@shared/schema";
+import { insertNewsSchema, insertNotificationSchema, News, User, updatePasswordSchema, themeSettingsSchema, adSettingsSchema } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,17 +9,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { 
+import {
   Home,
-  Loader2, 
+  Loader2,
   LogOut,
-  Newspaper, 
-  PlusCircle, 
-  SendHorizonal, 
-  Trash2, 
+  Newspaper,
+  PlusCircle,
+  SendHorizonal,
+  Trash2,
   Users,
   Key,
-  Palette 
+  Palette,
+  MonitorSmartphone
 } from "lucide-react";
 import { Link, Redirect } from "wouter";
 import {
@@ -73,6 +74,17 @@ export default function AdminPage() {
     },
   });
 
+  const adSettingsForm = useForm({
+    resolver: zodResolver(adSettingsSchema),
+    defaultValues: {
+      googleAdClient: "",
+      googleAdSlot: "",
+      isEnabled: true,
+      width: 728,
+      height: 90,
+    },
+  });
+
   const { data: news, isLoading: newsLoading } = useQuery<News[]>({
     queryKey: ["/api/news"],
   });
@@ -106,6 +118,12 @@ export default function AdminPage() {
     await apiRequest("POST", "/api/theme", data);
     queryClient.invalidateQueries({ queryKey: ["/api/theme"] });
     themeForm.reset();
+  };
+
+  const onAdSettingsSubmit = async (data: any) => {
+    await apiRequest("POST", "/api/ad-settings", data);
+    queryClient.invalidateQueries({ queryKey: ["/api/ad-settings"] });
+    adSettingsForm.reset();
   };
 
   const deleteNews = async (id: number) => {
@@ -153,6 +171,7 @@ export default function AdminPage() {
             <TabsTrigger value="news">News Management</TabsTrigger>
             <TabsTrigger value="users">User Management</TabsTrigger>
             <TabsTrigger value="theme">Theme Settings</TabsTrigger>
+            <TabsTrigger value="ads">Advertisement</TabsTrigger>
           </TabsList>
 
           <TabsContent value="news">
@@ -279,10 +298,10 @@ export default function AdminPage() {
                         <CardContent>
                           <p className="whitespace-pre-wrap">{item.content}</p>
                           {item.imageUrl && (
-                            <img 
-                              src={item.imageUrl} 
+                            <img
+                              src={item.imageUrl}
                               alt={item.title}
-                              className="mt-4 rounded-md max-h-48 object-cover" 
+                              className="mt-4 rounded-md max-h-48 object-cover"
                             />
                           )}
                         </CardContent>
@@ -357,9 +376,9 @@ export default function AdminPage() {
                                 </Form>
                               </DialogContent>
                             </Dialog>
-                            <Button 
-                              variant="destructive" 
-                              size="icon" 
+                            <Button
+                              variant="destructive"
+                              size="icon"
                               onClick={() => deleteUser(userItem.id)}
                               disabled={userItem.id === user.id}
                             >
@@ -395,8 +414,8 @@ export default function AdminPage() {
                           <FormControl>
                             <div className="flex gap-2">
                               <Input type="color" className="w-12 h-10 p-1" {...field} />
-                              <Input 
-                                placeholder="e.g. #FF0000 or rgb(255, 0, 0)" 
+                              <Input
+                                placeholder="e.g. #FF0000 or rgb(255, 0, 0)"
                                 {...field}
                                 onChange={(e) => {
                                   field.onChange(e.target.value);
@@ -418,8 +437,8 @@ export default function AdminPage() {
                           <FormControl>
                             <div className="flex gap-2">
                               <Input type="color" className="w-12 h-10 p-1" {...field} />
-                              <Input 
-                                placeholder="e.g. #FF0000 or rgb(255, 0, 0)" 
+                              <Input
+                                placeholder="e.g. #FF0000 or rgb(255, 0, 0)"
                                 {...field}
                                 onChange={(e) => {
                                   field.onChange(e.target.value);
@@ -441,8 +460,8 @@ export default function AdminPage() {
                           <FormControl>
                             <div className="flex gap-2">
                               <Input type="color" className="w-12 h-10 p-1" {...field} />
-                              <Input 
-                                placeholder="e.g. #FF0000 or rgb(255, 0, 0)" 
+                              <Input
+                                placeholder="e.g. #FF0000 or rgb(255, 0, 0)"
                                 {...field}
                                 onChange={(e) => {
                                   field.onChange(e.target.value);
@@ -468,6 +487,86 @@ export default function AdminPage() {
                       )}
                     />
                     <Button type="submit">Save Theme Settings</Button>
+                  </form>
+                </Form>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="ads">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MonitorSmartphone className="h-5 w-5" />
+                  Google Ads Settings
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Form {...adSettingsForm}>
+                  <form onSubmit={adSettingsForm.handleSubmit(onAdSettingsSubmit)} className="space-y-4">
+                    <FormField
+                      control={adSettingsForm.control}
+                      name="googleAdClient"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Google Ad Client ID</FormLabel>
+                          <FormControl>
+                            <Input placeholder="ca-pub-xxxxxxxxxxxxxxxx" {...field} />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={adSettingsForm.control}
+                      name="googleAdSlot"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Google Ad Slot ID</FormLabel>
+                          <FormControl>
+                            <Input placeholder="xxxxxxxxxx" {...field} />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={adSettingsForm.control}
+                      name="isEnabled"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Enable Advertisements</FormLabel>
+                          <FormControl>
+                            <Input type="checkbox" {...field} />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={adSettingsForm.control}
+                        name="width"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Ad Width (px)</FormLabel>
+                            <FormControl>
+                              <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value))} />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={adSettingsForm.control}
+                        name="height"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Ad Height (px)</FormLabel>
+                            <FormControl>
+                              <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value))} />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <Button type="submit">Save Ad Settings</Button>
                   </form>
                 </Form>
               </CardContent>

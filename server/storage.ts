@@ -1,4 +1,4 @@
-import { News, Notification, User, Weather, InsertUser, ThemeSettings, InsertNews, InsertNotification, InsertWeather } from "@shared/schema";
+import { News, Notification, User, Weather, InsertUser, ThemeSettings, InsertNews, InsertNotification, InsertWeather, AdSettings } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
 
@@ -31,6 +31,10 @@ export interface IStorage {
   updateThemeSettings(settings: Omit<ThemeSettings, "id" | "updatedAt">): Promise<ThemeSettings>;
   getThemeSettings(): Promise<ThemeSettings | undefined>;
 
+  // Ad Settings operations
+  updateAdSettings(settings: Omit<AdSettings, "id" | "updatedAt">): Promise<AdSettings>;
+  getAdSettings(): Promise<AdSettings | undefined>;
+
   sessionStore: session.Store;
 }
 
@@ -40,6 +44,7 @@ export class MemStorage implements IStorage {
   private notifications: Map<number, Notification>;
   private weather: Weather | undefined;
   private themeSettings: ThemeSettings | undefined;
+  private adSettings: AdSettings | undefined;
 
   currentId: number;
   sessionStore: session.Store;
@@ -156,6 +161,20 @@ export class MemStorage implements IStorage {
 
   async getThemeSettings(): Promise<ThemeSettings | undefined> {
     return this.themeSettings;
+  }
+
+  async updateAdSettings(settings: Omit<AdSettings, "id" | "updatedAt">): Promise<AdSettings> {
+    const adUpdate: AdSettings = {
+      ...settings,
+      id: 1,
+      updatedAt: new Date(),
+    };
+    this.adSettings = adUpdate;
+    return adUpdate;
+  }
+
+  async getAdSettings(): Promise<AdSettings | undefined> {
+    return this.adSettings;
   }
 }
 
