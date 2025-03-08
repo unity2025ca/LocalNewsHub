@@ -8,6 +8,40 @@ import { z } from "zod";
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
 
+  // User Routes
+  app.get("/api/users", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user.isAdmin) {
+      return res.status(403).send("Only admins can view all users");
+    }
+
+    const users = await storage.getAllUsers();
+    res.json(users);
+  });
+
+  app.delete("/api/users/:id", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user.isAdmin) {
+      return res.status(403).send("Only admins can delete users");
+    }
+
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).send("Invalid user ID");
+    }
+
+    // Prevent admin from deleting themselves
+    if (id === req.user.id) {
+      return res.status(400).send("Cannot delete your own account");
+    }
+
+    const user = await storage.getUser(id);
+    if (!user) {
+      return res.status(404).send("User not found");
+    }
+
+    await storage.deleteUser(id);
+    res.sendStatus(200);
+  });
+
   // News Routes
   app.get("/api/news", async (_req, res) => {
     const news = await storage.getAllNews();
@@ -59,7 +93,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.isAuthenticated()) {
       return res.status(401).send("Must be logged in to view notifications");
     }
-    
+
     const notifications = await storage.getAllNotifications();
     res.json(notifications);
   });

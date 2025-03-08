@@ -9,6 +9,8 @@ export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  getAllUsers(): Promise<User[]>;
+  deleteUser(id: number): Promise<void>;
 
   // News operations
   createNews(news: InsertNews & { authorId: number }): Promise<News>;
@@ -63,6 +65,14 @@ export class MemStorage implements IStorage {
     const user: User = { ...insertUser, id, isAdmin: isFirstUser };
     this.users.set(id, user);
     return user;
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    return Array.from(this.users.values());
+  }
+
+  async deleteUser(id: number): Promise<void> {
+    this.users.delete(id);
   }
 
   async createNews(news: InsertNews & { authorId: number }): Promise<News> {
