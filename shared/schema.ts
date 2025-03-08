@@ -32,9 +32,22 @@ export const weather = pgTable("weather", {
   date: timestamp("date").notNull().defaultNow(),
 });
 
+export const themeSettings = pgTable("theme_settings", {
+  id: serial("id").primaryKey(),
+  primaryColor: text("primary_color").notNull(),
+  buttonColor: text("button_color").notNull(),
+  textColor: text("text_color").notNull(),
+  logoUrl: text("logo_url"),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
+});
+
+export const updatePasswordSchema = z.object({
+  password: z.string().min(1, "Password is required"),
 });
 
 export const insertNewsSchema = createInsertSchema(news).pick({
@@ -53,8 +66,16 @@ export const insertWeatherSchema = createInsertSchema(weather).pick({
   condition: true,
 });
 
+export const themeSettingsSchema = createInsertSchema(themeSettings).pick({
+  primaryColor: true,
+  buttonColor: true,
+  textColor: true,
+  logoUrl: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type News = typeof news.$inferSelect;
 export type Notification = typeof notifications.$inferSelect;
 export type Weather = typeof weather.$inferSelect;
+export type ThemeSettings = typeof themeSettings.$inferSelect;

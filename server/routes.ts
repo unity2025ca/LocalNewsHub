@@ -2,8 +2,9 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
-import { insertNewsSchema, insertNotificationSchema, insertWeatherSchema } from "@shared/schema";
+import { insertNewsSchema, insertNotificationSchema, insertWeatherSchema, updatePasswordSchema, themeSettingsSchema } from "@shared/schema";
 import { z } from "zod";
+import { hashPassword } from './auth'; // Assuming hashPassword function exists in ./auth
 
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
@@ -40,6 +41,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     await storage.deleteUser(id);
     res.sendStatus(200);
+  });
+
+  app.patch("/api/users/:id/password", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user.isAdmin) {
+      return res.status(403).send("Only admins can update user passwords");
+    }
+
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).send("Invalid user ID");
+    }
+
+    try {
+      const validatedData = updatePasswordSchema.parse(req.body);
+      const hashedPassword = await hashPassword(validatedData.password);
+      await storage.updateUserPassword(id, hashedPassword);
+      res.sendStatus(200);
+    } catch (e) {
+      if (e instanceof z.ZodError) {
+        res.status(400).json(e.errors);
+      } else {
+        throw e;
+      }
+    }
+  });
+
+  // Theme Routes
+  app.get("/api/theme", async (_req, res) => {
+    const theme = await storage.getThemeSettings();
+    if (!theme) {
+      return res.status(404).send("No theme settings found");
+    }
+    res.json(theme);
+  });
+
+  app.post("/api/theme", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user.isAdmin) {
+      return res.status(403).send("Only admins can update theme settings");
+    }
+
+    try {
+      const validatedData = themeSettingsSchema.parse(req.body);
+      const theme = await storage.updateThemeSettings(validatedData);
+      res.status(200).json(theme);
+    } catch (e) {
+      if (e instanceof z.ZodError) {
+        res.status(400).json(e.errors);
+      } else {
+        throw e;
+      }
+    }
   });
 
   // News Routes

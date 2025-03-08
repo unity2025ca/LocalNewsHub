@@ -1,4 +1,4 @@
-import { News, Notification, User, Weather, InsertUser, InsertNews, InsertNotification, InsertWeather } from "@shared/schema";
+import { News, Notification, User, Weather, InsertUser, ThemeSettings, InsertNews, InsertNotification, InsertWeather } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
 
@@ -11,6 +11,7 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   getAllUsers(): Promise<User[]>;
   deleteUser(id: number): Promise<void>;
+  updateUserPassword(id: number, password: string): Promise<void>;
 
   // News operations
   createNews(news: InsertNews & { authorId: number }): Promise<News>;
@@ -26,6 +27,10 @@ export interface IStorage {
   updateWeather(weather: InsertWeather): Promise<Weather>;
   getLatestWeather(): Promise<Weather | undefined>;
 
+  // Theme operations
+  updateThemeSettings(settings: Omit<ThemeSettings, "id" | "updatedAt">): Promise<ThemeSettings>;
+  getThemeSettings(): Promise<ThemeSettings | undefined>;
+
   sessionStore: session.Store;
 }
 
@@ -34,6 +39,7 @@ export class MemStorage implements IStorage {
   private news: Map<number, News>;
   private notifications: Map<number, Notification>;
   private weather: Weather | undefined;
+  private themeSettings: ThemeSettings | undefined;
 
   currentId: number;
   sessionStore: session.Store;
@@ -73,6 +79,13 @@ export class MemStorage implements IStorage {
 
   async deleteUser(id: number): Promise<void> {
     this.users.delete(id);
+  }
+
+  async updateUserPassword(id: number, password: string): Promise<void> {
+    const user = this.users.get(id);
+    if (user) {
+      this.users.set(id, { ...user, password });
+    }
   }
 
   async createNews(news: InsertNews & { authorId: number }): Promise<News> {
@@ -129,6 +142,20 @@ export class MemStorage implements IStorage {
 
   async getLatestWeather(): Promise<Weather | undefined> {
     return this.weather;
+  }
+
+  async updateThemeSettings(settings: Omit<ThemeSettings, "id" | "updatedAt">): Promise<ThemeSettings> {
+    const themeUpdate: ThemeSettings = {
+      ...settings,
+      id: 1,
+      updatedAt: new Date(),
+    };
+    this.themeSettings = themeUpdate;
+    return themeUpdate;
+  }
+
+  async getThemeSettings(): Promise<ThemeSettings | undefined> {
+    return this.themeSettings;
   }
 }
 

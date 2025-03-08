@@ -1,7 +1,7 @@
 import { useAuth } from "@/hooks/use-auth";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertNewsSchema, insertNotificationSchema, News, User } from "@shared/schema";
+import { insertNewsSchema, insertNotificationSchema, News, User, updatePasswordSchema, themeSettingsSchema } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -17,7 +17,9 @@ import {
   PlusCircle, 
   SendHorizonal, 
   Trash2, 
-  Users 
+  Users,
+  Key,
+  Palette 
 } from "lucide-react";
 import { Link, Redirect } from "wouter";
 import {
@@ -26,6 +28,13 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 export default function AdminPage() {
   const { user, logoutMutation } = useAuth();
@@ -44,6 +53,23 @@ export default function AdminPage() {
     defaultValues: {
       title: "",
       message: "",
+    },
+  });
+
+  const passwordForm = useForm({
+    resolver: zodResolver(updatePasswordSchema),
+    defaultValues: {
+      password: "",
+    },
+  });
+
+  const themeForm = useForm({
+    resolver: zodResolver(themeSettingsSchema),
+    defaultValues: {
+      primaryColor: "",
+      buttonColor: "",
+      textColor: "",
+      logoUrl: "",
     },
   });
 
@@ -69,6 +95,17 @@ export default function AdminPage() {
     await apiRequest("POST", "/api/notifications", data);
     queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
     notificationForm.reset();
+  };
+
+  const onPasswordSubmit = async (userId: number, data: any) => {
+    await apiRequest("PATCH", `/api/users/${userId}/password`, data);
+    passwordForm.reset();
+  };
+
+  const onThemeSubmit = async (data: any) => {
+    await apiRequest("POST", "/api/theme", data);
+    queryClient.invalidateQueries({ queryKey: ["/api/theme"] });
+    themeForm.reset();
   };
 
   const deleteNews = async (id: number) => {
@@ -115,6 +152,7 @@ export default function AdminPage() {
           <TabsList className="mb-8">
             <TabsTrigger value="news">News Management</TabsTrigger>
             <TabsTrigger value="users">User Management</TabsTrigger>
+            <TabsTrigger value="theme">Theme Settings</TabsTrigger>
           </TabsList>
 
           <TabsContent value="news">
@@ -211,7 +249,6 @@ export default function AdminPage() {
                 </CardContent>
               </Card>
             </div>
-
             <Card className="mt-8">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -272,28 +309,167 @@ export default function AdminPage() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {users?.map((user) => (
-                      <Card key={user.id}>
+                    {users?.map((userItem) => (
+                      <Card key={userItem.id}>
                         <CardHeader className="flex flex-row items-start justify-between">
                           <div>
-                            <CardTitle>{user.username}</CardTitle>
+                            <CardTitle>{userItem.username}</CardTitle>
                             <p className="text-sm text-muted-foreground mt-1">
-                              {user.isAdmin ? "Administrator" : "Regular User"}
+                              {userItem.isAdmin ? "Administrator" : "Regular User"}
                             </p>
                           </div>
-                          <Button 
-                            variant="destructive" 
-                            size="icon" 
-                            onClick={() => deleteUser(user.id)}
-                            disabled={user.id === user.id} // Prevent self-deletion
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          <div className="flex gap-2">
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button variant="outline" size="icon">
+                                  <Key className="h-4 w-4" />
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent>
+                                <DialogHeader>
+                                  <DialogTitle>Update Password</DialogTitle>
+                                </DialogHeader>
+                                <Form {...passwordForm}>
+                                  <form
+                                    onSubmit={passwordForm.handleSubmit((data) =>
+                                      onPasswordSubmit(userItem.id, data)
+                                    )}
+                                    className="space-y-4"
+                                  >
+                                    <FormField
+                                      control={passwordForm.control}
+                                      name="password"
+                                      render={({ field }) => (
+                                        <FormItem>
+                                          <FormLabel>New Password</FormLabel>
+                                          <FormControl>
+                                            <Input
+                                              type="password"
+                                              placeholder="Enter new password"
+                                              {...field}
+                                            />
+                                          </FormControl>
+                                        </FormItem>
+                                      )}
+                                    />
+                                    <Button type="submit">Update Password</Button>
+                                  </form>
+                                </Form>
+                              </DialogContent>
+                            </Dialog>
+                            <Button 
+                              variant="destructive" 
+                              size="icon" 
+                              onClick={() => deleteUser(userItem.id)}
+                              disabled={userItem.id === user.id}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </CardHeader>
                       </Card>
                     ))}
                   </div>
                 )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="theme">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Palette className="h-5 w-5" />
+                  Customize Login Page
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Form {...themeForm}>
+                  <form onSubmit={themeForm.handleSubmit(onThemeSubmit)} className="space-y-4">
+                    <FormField
+                      control={themeForm.control}
+                      name="primaryColor"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Primary Color</FormLabel>
+                          <FormControl>
+                            <div className="flex gap-2">
+                              <Input type="color" className="w-12 h-10 p-1" {...field} />
+                              <Input 
+                                placeholder="e.g. #FF0000 or rgb(255, 0, 0)" 
+                                {...field}
+                                onChange={(e) => {
+                                  field.onChange(e.target.value);
+                                  const colorInput = document.querySelector(`input[type="color"][name="${field.name}"]`) as HTMLInputElement;
+                                  if (colorInput) colorInput.value = e.target.value;
+                                }}
+                              />
+                            </div>
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={themeForm.control}
+                      name="buttonColor"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Button Color</FormLabel>
+                          <FormControl>
+                            <div className="flex gap-2">
+                              <Input type="color" className="w-12 h-10 p-1" {...field} />
+                              <Input 
+                                placeholder="e.g. #FF0000 or rgb(255, 0, 0)" 
+                                {...field}
+                                onChange={(e) => {
+                                  field.onChange(e.target.value);
+                                  const colorInput = document.querySelector(`input[type="color"][name="${field.name}"]`) as HTMLInputElement;
+                                  if (colorInput) colorInput.value = e.target.value;
+                                }}
+                              />
+                            </div>
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={themeForm.control}
+                      name="textColor"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Text Color</FormLabel>
+                          <FormControl>
+                            <div className="flex gap-2">
+                              <Input type="color" className="w-12 h-10 p-1" {...field} />
+                              <Input 
+                                placeholder="e.g. #FF0000 or rgb(255, 0, 0)" 
+                                {...field}
+                                onChange={(e) => {
+                                  field.onChange(e.target.value);
+                                  const colorInput = document.querySelector(`input[type="color"][name="${field.name}"]`) as HTMLInputElement;
+                                  if (colorInput) colorInput.value = e.target.value;
+                                }}
+                              />
+                            </div>
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={themeForm.control}
+                      name="logoUrl"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Logo URL</FormLabel>
+                          <FormControl>
+                            <Input placeholder="https://..." {...field} />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <Button type="submit">Save Theme Settings</Button>
+                  </form>
+                </Form>
               </CardContent>
             </Card>
           </TabsContent>
