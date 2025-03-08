@@ -32,7 +32,7 @@ export class MemStorage implements IStorage {
   private news: Map<number, News>;
   private notifications: Map<number, Notification>;
   private weather: Weather | undefined;
-  
+
   currentId: number;
   sessionStore: session.Store;
 
@@ -58,7 +58,9 @@ export class MemStorage implements IStorage {
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = this.currentId++;
-    const user: User = { ...insertUser, id, isAdmin: false };
+    // Make the first registered user an admin
+    const isFirstUser = this.users.size === 0;
+    const user: User = { ...insertUser, id, isAdmin: isFirstUser };
     this.users.set(id, user);
     return user;
   }
