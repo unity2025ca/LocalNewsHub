@@ -1,7 +1,7 @@
 import { useAuth } from "@/hooks/use-auth";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertNewsSchema, insertWeatherSchema, News } from "@shared/schema";
+import { insertNewsSchema, insertNotificationSchema, News } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Loader2, Trash2 } from "lucide-react";
+import { Loader2, Newspaper, PlusCircle, SendHorizonal, Trash2, CloudSun } from "lucide-react";
 import { Redirect } from "wouter";
 
 export default function AdminPage() {
@@ -20,14 +20,15 @@ export default function AdminPage() {
     defaultValues: {
       title: "",
       content: "",
+      imageUrl: "",
     },
   });
 
-  const weatherForm = useForm({
-    resolver: zodResolver(insertWeatherSchema),
+  const notificationForm = useForm({
+    resolver: zodResolver(insertNotificationSchema),
     defaultValues: {
-      temperature: 0,
-      condition: "",
+      title: "",
+      message: "",
     },
   });
 
@@ -45,10 +46,10 @@ export default function AdminPage() {
     newsForm.reset();
   };
 
-  const onWeatherSubmit = async (data: any) => {
-    await apiRequest("POST", "/api/weather", data);
-    queryClient.invalidateQueries({ queryKey: ["/api/weather"] });
-    weatherForm.reset();
+  const onNotificationSubmit = async (data: any) => {
+    await apiRequest("POST", "/api/notifications", data);
+    queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+    notificationForm.reset();
   };
 
   const deleteNews = async (id: number) => {
@@ -57,14 +58,24 @@ export default function AdminPage() {
   };
 
   return (
-    <div dir="rtl" className="min-h-screen bg-background p-4">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-2xl font-bold mb-8">لوحة التحكم</h1>
+    <div className="min-h-screen bg-background">
+      <header className="border-b bg-card">
+        <div className="container mx-auto px-4 py-4">
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            <Newspaper className="h-6 w-6" />
+            Admin Dashboard
+          </h1>
+        </div>
+      </header>
 
-        <div className="grid md:grid-cols-2 gap-8">
+      <main className="container mx-auto px-4 py-8">
+        <div className="grid lg:grid-cols-2 gap-8">
           <Card>
             <CardHeader>
-              <CardTitle>إضافة خبر جديد</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <PlusCircle className="h-5 w-5" />
+                Create News Article
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <Form {...newsForm}>
@@ -74,9 +85,9 @@ export default function AdminPage() {
                     name="title"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>عنوان الخبر</FormLabel>
+                        <FormLabel>Title</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input placeholder="News title..." {...field} />
                         </FormControl>
                       </FormItem>
                     )}
@@ -86,14 +97,26 @@ export default function AdminPage() {
                     name="content"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>محتوى الخبر</FormLabel>
+                        <FormLabel>Content</FormLabel>
                         <FormControl>
-                          <Textarea {...field} />
+                          <Textarea placeholder="News content..." className="min-h-[100px]" {...field} />
                         </FormControl>
                       </FormItem>
                     )}
                   />
-                  <Button type="submit">نشر الخبر</Button>
+                  <FormField
+                    control={newsForm.control}
+                    name="imageUrl"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Image URL (optional)</FormLabel>
+                        <FormControl>
+                          <Input placeholder="https://..." {...field} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <Button type="submit">Publish News</Button>
                 </form>
               </Form>
             </CardContent>
@@ -101,36 +124,39 @@ export default function AdminPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>تحديث حالة الطقس</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <SendHorizonal className="h-5 w-5" />
+                Send Notification
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <Form {...weatherForm}>
-                <form onSubmit={weatherForm.handleSubmit(onWeatherSubmit)} className="space-y-4">
+              <Form {...notificationForm}>
+                <form onSubmit={notificationForm.handleSubmit(onNotificationSubmit)} className="space-y-4">
                   <FormField
-                    control={weatherForm.control}
-                    name="temperature"
+                    control={notificationForm.control}
+                    name="title"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>درجة الحرارة</FormLabel>
+                        <FormLabel>Title</FormLabel>
                         <FormControl>
-                          <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value))} />
+                          <Input placeholder="Notification title..." {...field} />
                         </FormControl>
                       </FormItem>
                     )}
                   />
                   <FormField
-                    control={weatherForm.control}
-                    name="condition"
+                    control={notificationForm.control}
+                    name="message"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>الحالة</FormLabel>
+                        <FormLabel>Message</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Textarea placeholder="Notification message..." className="min-h-[100px]" {...field} />
                         </FormControl>
                       </FormItem>
                     )}
                   />
-                  <Button type="submit">تحديث الطقس</Button>
+                  <Button type="submit">Send Notification</Button>
                 </form>
               </Form>
             </CardContent>
@@ -139,25 +165,40 @@ export default function AdminPage() {
 
         <Card className="mt-8">
           <CardHeader>
-            <CardTitle>إدارة الأخبار</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Newspaper className="h-5 w-5" />
+              Manage News
+            </CardTitle>
           </CardHeader>
           <CardContent>
             {newsLoading ? (
-              <div className="flex justify-center">
+              <div className="flex justify-center p-8">
                 <Loader2 className="h-8 w-8 animate-spin" />
               </div>
             ) : (
               <div className="space-y-4">
                 {news?.map((item) => (
                   <Card key={item.id}>
-                    <CardHeader className="flex flex-row items-center justify-between">
-                      <CardTitle>{item.title}</CardTitle>
+                    <CardHeader className="flex flex-row items-start justify-between">
+                      <div>
+                        <CardTitle>{item.title}</CardTitle>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {new Date(item.createdAt).toLocaleString()}
+                        </p>
+                      </div>
                       <Button variant="destructive" size="icon" onClick={() => deleteNews(item.id)}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </CardHeader>
                     <CardContent>
-                      <p>{item.content}</p>
+                      <p className="whitespace-pre-wrap">{item.content}</p>
+                      {item.imageUrl && (
+                        <img 
+                          src={item.imageUrl} 
+                          alt={item.title}
+                          className="mt-4 rounded-md max-h-48 object-cover" 
+                        />
+                      )}
                     </CardContent>
                   </Card>
                 ))}
@@ -165,7 +206,7 @@ export default function AdminPage() {
             )}
           </CardContent>
         </Card>
-      </div>
+      </main>
     </div>
   );
 }

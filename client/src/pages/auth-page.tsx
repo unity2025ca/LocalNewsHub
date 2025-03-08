@@ -49,28 +49,28 @@ export default function AuthPage() {
   });
 
   return (
-    <div dir="rtl" className="min-h-screen flex items-center justify-center bg-background p-4">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="w-full max-w-4xl grid gap-8 lg:grid-cols-2">
         <div className="flex flex-col justify-center space-y-6">
           <div className="flex items-center gap-2">
             <Newspaper className="h-10 w-10" />
-            <h1 className="text-3xl font-bold">أخبار محلية</h1>
+            <h1 className="text-3xl font-bold">Local News</h1>
           </div>
           <p className="text-muted-foreground text-lg">
-            تابع آخر الأخبار المحلية وتحديثات الطقس اليومية
+            Stay updated with the latest local news and daily weather updates
           </p>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>مرحباً بك</CardTitle>
-            <CardDescription>قم بتسجيل الدخول أو إنشاء حساب جديد</CardDescription>
+            <CardTitle>Welcome</CardTitle>
+            <CardDescription>Sign in or create a new account to continue</CardDescription>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="login">
               <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="login">تسجيل الدخول</TabsTrigger>
-                <TabsTrigger value="register">إنشاء حساب</TabsTrigger>
+                <TabsTrigger value="login">Sign In</TabsTrigger>
+                <TabsTrigger value="register">Register</TabsTrigger>
               </TabsList>
 
               <TabsContent value="login">
@@ -86,9 +86,9 @@ export default function AuthPage() {
                       name="username"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>اسم المستخدم</FormLabel>
+                          <FormLabel>Username</FormLabel>
                           <FormControl>
-                            <Input {...field} />
+                            <Input placeholder="Enter username" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -99,9 +99,9 @@ export default function AuthPage() {
                       name="password"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>كلمة المرور</FormLabel>
+                          <FormLabel>Password</FormLabel>
                           <FormControl>
-                            <Input type="password" {...field} />
+                            <Input type="password" placeholder="Enter password" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -112,7 +112,7 @@ export default function AuthPage() {
                       className="w-full"
                       disabled={loginMutation.isPending}
                     >
-                      تسجيل الدخول
+                      {loginMutation.isPending ? "Signing in..." : "Sign In"}
                     </Button>
                   </form>
                 </Form>
@@ -131,9 +131,9 @@ export default function AuthPage() {
                       name="username"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>اسم المستخدم</FormLabel>
+                          <FormLabel>Username</FormLabel>
                           <FormControl>
-                            <Input {...field} />
+                            <Input placeholder="Choose username" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -144,9 +144,9 @@ export default function AuthPage() {
                       name="password"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>كلمة المرور</FormLabel>
+                          <FormLabel>Password</FormLabel>
                           <FormControl>
-                            <Input type="password" {...field} />
+                            <Input type="password" placeholder="Choose password" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -157,7 +157,7 @@ export default function AuthPage() {
                       className="w-full"
                       disabled={registerMutation.isPending}
                     >
-                      إنشاء حساب
+                      {registerMutation.isPending ? "Creating account..." : "Create Account"}
                     </Button>
                   </form>
                 </Form>

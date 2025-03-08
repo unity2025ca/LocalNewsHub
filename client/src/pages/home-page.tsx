@@ -35,19 +35,19 @@ export default function HomePage() {
   });
 
   return (
-    <div dir="rtl" className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background">
       <header className="border-b">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Newspaper className="h-6 w-6" />
-            <h1 className="text-xl font-bold">أخبار محلية</h1>
+            <h1 className="text-xl font-bold">Local News</h1>
           </div>
           <div className="flex items-center gap-4">
             {user?.isAdmin && (
               <Link href="/admin">
                 <Button variant="outline" size="sm">
-                  <Settings className="h-4 w-4 ml-2" />
-                  لوحة التحكم
+                  <Settings className="h-4 w-4 mr-2" />
+                  Admin Dashboard
                 </Button>
               </Link>
             )}
@@ -56,8 +56,8 @@ export default function HomePage() {
               size="sm"
               onClick={() => logoutMutation.mutate()}
             >
-              <LogOut className="h-4 w-4 ml-2" />
-              تسجيل الخروج
+              <LogOut className="h-4 w-4 mr-2" />
+              Sign Out
             </Button>
           </div>
         </div>
@@ -74,13 +74,13 @@ export default function HomePage() {
                   ) : (
                     <Cloud className="h-5 w-5 text-blue-500" />
                   )}
-                  حالة الطقس
+                  Weather Conditions
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-2xl font-bold">{weather.temperature}°C</p>
-                <p className="text-muted-foreground">
-                  {weather.condition === "sunny" ? "مشمس" : "غائم"}
+                <p className="text-muted-foreground capitalize">
+                  {weather.condition}
                 </p>
               </CardContent>
             </Card>
@@ -88,24 +88,33 @@ export default function HomePage() {
 
           <div className="grid gap-8 md:grid-cols-2">
             <div>
-              <h2 className="text-2xl font-bold mb-4">آخر الأخبار</h2>
+              <h2 className="text-2xl font-bold mb-4">Latest News</h2>
               <div className="space-y-4">
                 {news?.map((item) => (
                   <Card key={item.id}>
                     <CardHeader>
                       <CardTitle>{item.title}</CardTitle>
                       <CardDescription>
-                        {new Date(item.createdAt).toLocaleDateString("ar-SA")}
+                        {new Date(item.createdAt).toLocaleString()}
                       </CardDescription>
                     </CardHeader>
-                    <CardContent>{item.content}</CardContent>
+                    <CardContent>
+                      <p className="whitespace-pre-wrap">{item.content}</p>
+                      {item.imageUrl && (
+                        <img 
+                          src={item.imageUrl} 
+                          alt={item.title}
+                          className="mt-4 rounded-md max-h-48 object-cover" 
+                        />
+                      )}
+                    </CardContent>
                   </Card>
                 ))}
               </div>
             </div>
 
             <div>
-              <h2 className="text-2xl font-bold mb-4">الإشعارات</h2>
+              <h2 className="text-2xl font-bold mb-4">Notifications</h2>
               <div className="space-y-4">
                 {notifications?.map((notification) => (
                   <Card key={notification.id}>
@@ -115,12 +124,12 @@ export default function HomePage() {
                         {notification.title}
                       </CardTitle>
                       <CardDescription>
-                        {new Date(notification.createdAt).toLocaleDateString(
-                          "ar-SA"
-                        )}
+                        {new Date(notification.createdAt).toLocaleString()}
                       </CardDescription>
                     </CardHeader>
-                    <CardContent>{notification.message}</CardContent>
+                    <CardContent>
+                      <p className="whitespace-pre-wrap">{notification.message}</p>
+                    </CardContent>
                   </Card>
                 ))}
               </div>
