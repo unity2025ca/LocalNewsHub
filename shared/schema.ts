@@ -56,37 +56,64 @@ export const initializeDatabase = async (sql: any) => {
   // Create tables if they don't exist
   // This is a simple migration approach for development
   try {
+    // Create users table
     await sql`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
         username TEXT NOT NULL UNIQUE,
         password TEXT NOT NULL,
         is_admin BOOLEAN NOT NULL DEFAULT FALSE
-      );
-      
+      )
+    `;
+    
+    // Create news table
+    await sql`
       CREATE TABLE IF NOT EXISTS news (
         id SERIAL PRIMARY KEY,
         title TEXT NOT NULL,
         content TEXT NOT NULL,
         image_url TEXT,
-        author_id INTEGER REFERENCES users(id),
+        author_id INTEGER,
         created_at TIMESTAMP NOT NULL DEFAULT NOW()
-      );
-      
+      )
+    `;
+    
+    // Add foreign key constraint after table creation
+    await sql`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_constraint WHERE conname = 'news_author_id_fkey'
+        ) THEN
+          ALTER TABLE news ADD CONSTRAINT news_author_id_fkey 
+          FOREIGN KEY (author_id) REFERENCES users(id);
+        END IF;
+      END
+      $$;
+    `;
+    
+    // Create notifications table
+    await sql`
       CREATE TABLE IF NOT EXISTS notifications (
         id SERIAL PRIMARY KEY,
         title TEXT NOT NULL,
         message TEXT NOT NULL,
         created_at TIMESTAMP NOT NULL DEFAULT NOW()
-      );
-      
+      )
+    `;
+    
+    // Create weather table
+    await sql`
       CREATE TABLE IF NOT EXISTS weather (
         id SERIAL PRIMARY KEY,
         temperature INTEGER NOT NULL,
         condition TEXT NOT NULL,
         date TIMESTAMP NOT NULL DEFAULT NOW()
-      );
-      
+      )
+    `;
+    
+    // Create theme_settings table
+    await sql`
       CREATE TABLE IF NOT EXISTS theme_settings (
         id SERIAL PRIMARY KEY,
         primary_color TEXT NOT NULL,
@@ -94,8 +121,11 @@ export const initializeDatabase = async (sql: any) => {
         text_color TEXT NOT NULL,
         logo_url TEXT,
         updated_at TIMESTAMP NOT NULL DEFAULT NOW()
-      );
-      
+      )
+    `;
+    
+    // Create ad_settings table
+    await sql`
       CREATE TABLE IF NOT EXISTS ad_settings (
         id SERIAL PRIMARY KEY,
         google_ad_client TEXT NOT NULL,
@@ -104,8 +134,9 @@ export const initializeDatabase = async (sql: any) => {
         width INTEGER NOT NULL DEFAULT 728,
         height INTEGER NOT NULL DEFAULT 90,
         updated_at TIMESTAMP NOT NULL DEFAULT NOW()
-      );
+      )
     `;
+    
     console.log('Database tables created or already exist');
   } catch (error) {
     console.error('Error creating database tables:', error);
