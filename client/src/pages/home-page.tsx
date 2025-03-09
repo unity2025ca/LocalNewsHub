@@ -25,6 +25,7 @@ export default function HomePage() {
 
   const { data: news } = useQuery<News[]>({
     queryKey: ["/api/news"],
+    refetchInterval: 5000, // Refresh every 5 seconds
   });
 
   const { data: notifications } = useQuery<Notification[]>({
