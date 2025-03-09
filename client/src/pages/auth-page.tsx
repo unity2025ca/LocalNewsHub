@@ -56,10 +56,10 @@ export default function AuthPage() {
         <div className="flex flex-col justify-center space-y-6">
           <div className="flex items-center gap-2">
             <Newspaper className="h-10 w-10" />
-            <h1 className="text-3xl font-bold">Local News</h1>
+            <h1 className="text-3xl font-bold">Unity</h1>
           </div>
           <p className="text-muted-foreground text-lg">
-            Stay updated with the latest local news and daily weather updates
+            Strength in unity
           </p>
         </div>
 
