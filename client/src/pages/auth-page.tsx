@@ -56,7 +56,7 @@ export default function AuthPage() {
         <div className="flex flex-col justify-center space-y-6">
           <div className="flex items-center gap-2">
             <img 
-              src="/attached_assets/WhatsApp Image 2025-03-08 at 7.44.37 PM.jpeg" 
+              src="https://j.top4top.io/p_33559kfwo1.jpeg" 
               alt="Logo" 
               className="h-12 w-12 object-contain" 
             />
