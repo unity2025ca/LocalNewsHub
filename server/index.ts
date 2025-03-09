@@ -1,6 +1,9 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { neon } from "@neondatabase/serverless";
+import { drizzle } from "drizzle-orm/neon-http";
+import { initializeDatabase } from "../shared/schema";
 
 const app = express();
 app.use(express.json());
@@ -37,6 +40,20 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Initialize database
+  if (process.env.DATABASE_URL) {
+    try {
+      const sql = neon(process.env.DATABASE_URL);
+      const db = drizzle(sql);
+      await initializeDatabase(sql);
+      log("Database initialized successfully");
+    } catch (error) {
+      console.error("Failed to initialize database:", error);
+    }
+  } else {
+    console.warn("DATABASE_URL not found, skipping database initialization");
+  }
+
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {

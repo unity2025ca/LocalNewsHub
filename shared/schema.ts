@@ -51,6 +51,68 @@ export const adSettings = pgTable("ad_settings", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+// Running the database migrations
+export const initializeDatabase = async (db: any) => {
+  // Create tables if they don't exist
+  // This is a simple migration approach for development
+  try {
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        username TEXT NOT NULL,
+        password TEXT NOT NULL,
+        is_admin BOOLEAN NOT NULL DEFAULT FALSE
+      );
+      
+      CREATE TABLE IF NOT EXISTS news (
+        id SERIAL PRIMARY KEY,
+        title TEXT NOT NULL,
+        content TEXT NOT NULL,
+        image_url TEXT,
+        author_id INTEGER NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      );
+      
+      CREATE TABLE IF NOT EXISTS notifications (
+        id SERIAL PRIMARY KEY,
+        title TEXT NOT NULL,
+        message TEXT NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      );
+      
+      CREATE TABLE IF NOT EXISTS weather (
+        id SERIAL PRIMARY KEY,
+        temperature REAL NOT NULL,
+        condition TEXT NOT NULL,
+        date TIMESTAMP NOT NULL DEFAULT NOW()
+      );
+      
+      CREATE TABLE IF NOT EXISTS theme_settings (
+        id SERIAL PRIMARY KEY,
+        primary_color TEXT NOT NULL,
+        button_color TEXT NOT NULL,
+        text_color TEXT NOT NULL,
+        logo_url TEXT,
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      );
+      
+      CREATE TABLE IF NOT EXISTS ad_settings (
+        id SERIAL PRIMARY KEY,
+        google_ad_client TEXT NOT NULL,
+        google_ad_slot TEXT NOT NULL,
+        is_enabled BOOLEAN NOT NULL DEFAULT TRUE,
+        width INTEGER NOT NULL DEFAULT 728,
+        height INTEGER NOT NULL DEFAULT 90,
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      );
+    `);
+    console.log('Database tables created or already exist');
+  } catch (error) {
+    console.error('Error creating database tables:', error);
+    throw error;
+  }
+};
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,

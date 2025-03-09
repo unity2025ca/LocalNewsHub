@@ -1,6 +1,11 @@
+
 import { News, Notification, User, Weather, InsertUser, ThemeSettings, InsertNews, InsertNotification, InsertWeather, AdSettings } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
+import { neon } from "@neondatabase/serverless";
+import { drizzle } from "drizzle-orm/neon-http";
+import { eq } from "drizzle-orm";
+import * as schema from "../shared/schema";
 
 const MemoryStore = createMemoryStore(session);
 
@@ -38,144 +43,216 @@ export interface IStorage {
   sessionStore: session.Store;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<number, User>;
-  private news: Map<number, News>;
-  private notifications: Map<number, Notification>;
-  private weather: Weather | undefined;
-  private themeSettings: ThemeSettings | undefined;
-  private adSettings: AdSettings | undefined;
-
-  currentId: number;
+export class PostgresStorage implements IStorage {
+  private db;
   sessionStore: session.Store;
 
   constructor() {
-    this.users = new Map();
-    this.news = new Map();
-    this.notifications = new Map();
-    this.currentId = 1;
+    if (!process.env.DATABASE_URL) {
+      throw new Error("DATABASE_URL environment variable is required");
+    }
+    
+    const sql = neon(process.env.DATABASE_URL);
+    this.db = drizzle(sql, { schema });
+    
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000,
     });
   }
 
   async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
+    const users = await this.db.query.users.findMany({
+      where: eq(schema.users.id, id)
+    });
+    return users[0];
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+    const users = await this.db.query.users.findMany({
+      where: eq(schema.users.username, username)
+    });
+    return users[0];
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.currentId++;
-    // Make the first registered user an admin
-    const isFirstUser = this.users.size === 0;
-    const user: User = { ...insertUser, id, isAdmin: isFirstUser };
-    this.users.set(id, user);
+    // Check if this is the first user to make them admin
+    const allUsers = await this.db.query.users.findMany();
+    const isFirstUser = allUsers.length === 0;
+    
+    const [user] = await this.db.insert(schema.users)
+      .values({
+        ...insertUser,
+        isAdmin: isFirstUser
+      })
+      .returning();
+      
     return user;
   }
 
   async getAllUsers(): Promise<User[]> {
-    return Array.from(this.users.values());
+    return await this.db.query.users.findMany();
   }
 
   async deleteUser(id: number): Promise<void> {
-    this.users.delete(id);
+    await this.db.delete(schema.users)
+      .where(eq(schema.users.id, id));
   }
 
   async updateUserPassword(id: number, password: string): Promise<void> {
-    const user = this.users.get(id);
-    if (user) {
-      this.users.set(id, { ...user, password });
-    }
+    await this.db.update(schema.users)
+      .set({ password })
+      .where(eq(schema.users.id, id));
   }
 
   async createNews(news: InsertNews & { authorId: number }): Promise<News> {
-    const id = this.currentId++;
-    const newsItem: News = {
-      ...news,
-      id,
-      createdAt: new Date(),
-    };
-    this.news.set(id, newsItem);
+    const [newsItem] = await this.db.insert(schema.news)
+      .values({
+        ...news,
+        createdAt: new Date()
+      })
+      .returning();
+      
     return newsItem;
   }
 
   async getAllNews(): Promise<News[]> {
-    return Array.from(this.news.values()).sort((a, b) => 
+    const allNews = await this.db.query.news.findMany();
+    return allNews.sort((a, b) => 
       b.createdAt.getTime() - a.createdAt.getTime()
     );
   }
 
   async getNewsById(id: number): Promise<News | undefined> {
-    return this.news.get(id);
+    const newsItems = await this.db.query.news.findMany({
+      where: eq(schema.news.id, id)
+    });
+    return newsItems[0];
   }
 
   async deleteNews(id: number): Promise<void> {
-    this.news.delete(id);
+    await this.db.delete(schema.news)
+      .where(eq(schema.news.id, id));
   }
 
   async createNotification(notification: InsertNotification): Promise<Notification> {
-    const id = this.currentId++;
-    const notificationItem: Notification = {
-      ...notification,
-      id,
-      createdAt: new Date(),
-    };
-    this.notifications.set(id, notificationItem);
+    const [notificationItem] = await this.db.insert(schema.notifications)
+      .values({
+        ...notification,
+        createdAt: new Date()
+      })
+      .returning();
+      
     return notificationItem;
   }
 
   async getAllNotifications(): Promise<Notification[]> {
-    return Array.from(this.notifications.values()).sort((a, b) => 
+    const allNotifications = await this.db.query.notifications.findMany();
+    return allNotifications.sort((a, b) => 
       b.createdAt.getTime() - a.createdAt.getTime()
     );
   }
 
   async updateWeather(weather: InsertWeather): Promise<Weather> {
-    const weatherUpdate: Weather = {
-      ...weather,
-      id: 1,
-      date: new Date(),
-    };
-    this.weather = weatherUpdate;
-    return weatherUpdate;
+    // First check if a weather record exists
+    const existingWeather = await this.db.query.weather.findMany();
+    
+    if (existingWeather.length > 0) {
+      // Update existing record
+      const [weatherUpdate] = await this.db.update(schema.weather)
+        .set({
+          ...weather,
+          date: new Date()
+        })
+        .where(eq(schema.weather.id, existingWeather[0].id))
+        .returning();
+      
+      return weatherUpdate;
+    } else {
+      // Create new record
+      const [weatherUpdate] = await this.db.insert(schema.weather)
+        .values({
+          ...weather,
+          date: new Date()
+        })
+        .returning();
+        
+      return weatherUpdate;
+    }
   }
 
   async getLatestWeather(): Promise<Weather | undefined> {
-    return this.weather;
+    const weatherData = await this.db.query.weather.findMany({
+      orderBy: (weather, { desc }) => [desc(weather.date)]
+    });
+    return weatherData[0];
   }
 
   async updateThemeSettings(settings: Omit<ThemeSettings, "id" | "updatedAt">): Promise<ThemeSettings> {
-    const themeUpdate: ThemeSettings = {
-      ...settings,
-      id: 1,
-      updatedAt: new Date(),
-    };
-    this.themeSettings = themeUpdate;
-    return themeUpdate;
+    // Check if theme settings exist
+    const existingSettings = await this.db.query.themeSettings.findMany();
+    
+    if (existingSettings.length > 0) {
+      // Update existing record
+      const [themeUpdate] = await this.db.update(schema.themeSettings)
+        .set({
+          ...settings,
+          updatedAt: new Date()
+        })
+        .where(eq(schema.themeSettings.id, existingSettings[0].id))
+        .returning();
+      
+      return themeUpdate;
+    } else {
+      // Create new record
+      const [themeUpdate] = await this.db.insert(schema.themeSettings)
+        .values({
+          ...settings,
+          updatedAt: new Date()
+        })
+        .returning();
+        
+      return themeUpdate;
+    }
   }
 
   async getThemeSettings(): Promise<ThemeSettings | undefined> {
-    return this.themeSettings;
+    const settings = await this.db.query.themeSettings.findMany();
+    return settings[0];
   }
 
   async updateAdSettings(settings: Omit<AdSettings, "id" | "updatedAt">): Promise<AdSettings> {
-    const adUpdate: AdSettings = {
-      ...settings,
-      id: 1,
-      updatedAt: new Date(),
-    };
-    this.adSettings = adUpdate;
-    return adUpdate;
+    // Check if ad settings exist
+    const existingSettings = await this.db.query.adSettings.findMany();
+    
+    if (existingSettings.length > 0) {
+      // Update existing record
+      const [adUpdate] = await this.db.update(schema.adSettings)
+        .set({
+          ...settings,
+          updatedAt: new Date()
+        })
+        .where(eq(schema.adSettings.id, existingSettings[0].id))
+        .returning();
+      
+      return adUpdate;
+    } else {
+      // Create new record
+      const [adUpdate] = await this.db.insert(schema.adSettings)
+        .values({
+          ...settings,
+          updatedAt: new Date()
+        })
+        .returning();
+        
+      return adUpdate;
+    }
   }
 
   async getAdSettings(): Promise<AdSettings | undefined> {
-    return this.adSettings;
+    const settings = await this.db.query.adSettings.findMany();
+    return settings[0];
   }
 }
 
-export const storage = new MemStorage();
+// Change this line to use PostgreSQL storage
+export const storage = new PostgresStorage();
