@@ -59,7 +59,7 @@ export default function HomePage() {
               alt="Logo" 
               className="h-12 w-12 object-contain" 
             />
-            <h1 className="text-xl font-bold">Local News</h1>
+            <h1 className="text-xl font-bold">Unity</h1>
           </div>
           <div className="flex items-center gap-4">
             {user?.isAdmin && (
