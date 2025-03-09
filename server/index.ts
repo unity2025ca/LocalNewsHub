@@ -51,6 +51,8 @@ app.use((req, res, next) => {
     }
   } else {
     console.warn("DATABASE_URL not found, skipping database initialization");
+    console.warn("Some features requiring database access will not work");
+    // You can set a mockup database for testing if needed, or implement memory-only mode
   }
 
   const server = await registerRoutes(app);
