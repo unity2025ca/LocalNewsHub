@@ -54,7 +54,11 @@ export default function HomePage() {
       <header className="border-b">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Newspaper className="h-6 w-6" />
+             <img 
+              src="https://j.top4top.io/p_33559kfwo1.jpeg" 
+              alt="Logo" 
+              className="h-12 w-12 object-contain" 
+            />
             <h1 className="text-xl font-bold">Local News</h1>
           </div>
           <div className="flex items-center gap-4">
