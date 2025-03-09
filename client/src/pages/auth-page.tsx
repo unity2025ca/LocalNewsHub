@@ -55,7 +55,11 @@ export default function AuthPage() {
       <div className="w-full max-w-4xl grid gap-8 lg:grid-cols-2">
         <div className="flex flex-col justify-center space-y-6">
           <div className="flex items-center gap-2">
-            <Newspaper className="h-10 w-10" />
+            <img 
+              src="/attached_assets/WhatsApp Image 2025-03-08 at 7.44.37 PM.jpeg" 
+              alt="Logo" 
+              className="h-12 w-12 object-contain" 
+            />
             <h1 className="text-3xl font-bold">Unity</h1>
           </div>
           <p className="text-muted-foreground text-lg">
