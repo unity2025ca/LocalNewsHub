@@ -52,14 +52,14 @@ export const adSettings = pgTable("ad_settings", {
 });
 
 // Running the database migrations
-export const initializeDatabase = async (db: any) => {
+export const initializeDatabase = async (sql: any) => {
   // Create tables if they don't exist
   // This is a simple migration approach for development
   try {
-    await db.execute(`
+    await sql`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
-        username TEXT NOT NULL,
+        username TEXT NOT NULL UNIQUE,
         password TEXT NOT NULL,
         is_admin BOOLEAN NOT NULL DEFAULT FALSE
       );
@@ -69,7 +69,7 @@ export const initializeDatabase = async (db: any) => {
         title TEXT NOT NULL,
         content TEXT NOT NULL,
         image_url TEXT,
-        author_id INTEGER NOT NULL,
+        author_id INTEGER REFERENCES users(id),
         created_at TIMESTAMP NOT NULL DEFAULT NOW()
       );
       
@@ -82,7 +82,7 @@ export const initializeDatabase = async (db: any) => {
       
       CREATE TABLE IF NOT EXISTS weather (
         id SERIAL PRIMARY KEY,
-        temperature REAL NOT NULL,
+        temperature INTEGER NOT NULL,
         condition TEXT NOT NULL,
         date TIMESTAMP NOT NULL DEFAULT NOW()
       );
@@ -105,7 +105,7 @@ export const initializeDatabase = async (db: any) => {
         height INTEGER NOT NULL DEFAULT 90,
         updated_at TIMESTAMP NOT NULL DEFAULT NOW()
       );
-    `);
+    `;
     console.log('Database tables created or already exist');
   } catch (error) {
     console.error('Error creating database tables:', error);

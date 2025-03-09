@@ -44,7 +44,6 @@ app.use((req, res, next) => {
   if (process.env.DATABASE_URL) {
     try {
       const sql = neon(process.env.DATABASE_URL);
-      const db = drizzle(sql);
       await initializeDatabase(sql);
       log("Database initialized successfully");
     } catch (error) {
