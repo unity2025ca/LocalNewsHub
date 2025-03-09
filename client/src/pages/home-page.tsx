@@ -172,3 +172,105 @@ export default function HomePage() {
     </div>
   );
 }
+import { useState, useCallback } from 'react';
+import { useAutoRefresh } from '@/hooks/use-auto-refresh';
+import { News, Notification, Weather } from '@shared/schema';
+
+export default function HomePage() {
+  const [news, setNews] = useState<News[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [weather, setWeather] = useState<Weather | null>(null);
+
+  // Function to fetch all data
+  const fetchData = useCallback(async () => {
+    try {
+      // Fetch news
+      const newsResponse = await fetch('/api/news');
+      if (newsResponse.ok) {
+        const newsData = await newsResponse.json();
+        setNews(newsData);
+      }
+
+      // Fetch notifications
+      const notificationsResponse = await fetch('/api/notifications');
+      if (notificationsResponse.ok) {
+        const notificationsData = await notificationsResponse.json();
+        setNotifications(notificationsData);
+      }
+
+      // Fetch weather
+      const weatherResponse = await fetch('/api/weather');
+      if (weatherResponse.ok) {
+        const weatherData = await weatherResponse.json();
+        setWeather(weatherData);
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  }, []);
+
+  // Use the auto-refresh hook to refresh data every 5 seconds
+  useAutoRefresh(fetchData, 5000);
+
+  return (
+    <div className="container mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-6">Local News Dashboard</h1>
+      
+      {/* Weather section */}
+      {weather && (
+        <div className="mb-6 p-4 bg-card rounded-lg shadow">
+          <h2 className="text-xl font-semibold">Weather Today</h2>
+          <p>Temperature: {weather.temperature}°C</p>
+          <p>Condition: {weather.condition}</p>
+        </div>
+      )}
+      
+      {/* News section */}
+      <div className="mb-6">
+        <h2 className="text-xl font-semibold mb-4">Latest News</h2>
+        {news.length > 0 ? (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {news.map((item) => (
+              <div key={item.id} className="bg-card p-4 rounded-lg shadow">
+                {item.imageUrl && (
+                  <img 
+                    src={item.imageUrl} 
+                    alt={item.title} 
+                    className="w-full h-40 object-cover rounded mb-3" 
+                  />
+                )}
+                <h3 className="font-bold">{item.title}</h3>
+                <p className="mt-2">{item.content}</p>
+                <p className="text-xs text-muted-foreground mt-2">
+                  {new Date(item.createdAt).toLocaleString()}
+                </p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p>No news available</p>
+        )}
+      </div>
+      
+      {/* Notifications section */}
+      <div>
+        <h2 className="text-xl font-semibold mb-4">Notifications</h2>
+        {notifications.length > 0 ? (
+          <div className="space-y-3">
+            {notifications.map((notification) => (
+              <div key={notification.id} className="bg-card p-4 rounded-lg shadow">
+                <h3 className="font-bold">{notification.title}</h3>
+                <p className="mt-2">{notification.message}</p>
+                <p className="text-xs text-muted-foreground mt-2">
+                  {new Date(notification.createdAt).toLocaleString()}
+                </p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p>No notifications available</p>
+        )}
+      </div>
+    </div>
+  );
+}
