@@ -197,9 +197,9 @@ export default function AuthPage() {
                       name="username"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>اسم المستخدم</FormLabel>
+                          <FormLabel>Username</FormLabel>
                           <FormControl>
-                            <Input placeholder="اختر اسم مستخدم (أحرف إنجليزية فقط)" {...field} />
+                            <Input placeholder="Choose a username (English characters only)" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -210,9 +210,9 @@ export default function AuthPage() {
                       name="email"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>البريد الإلكتروني</FormLabel>
+                          <FormLabel>Email</FormLabel>
                           <FormControl>
-                            <Input type="email" placeholder="أدخل بريدك الإلكتروني" {...field} />
+                            <Input type="email" placeholder="Enter your email address" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
