@@ -157,7 +157,7 @@ export class PostgresStorage implements IStorage {
       where: or(
         isNull(schema.notifications.expirationHours),
         gt(
-          this.db.sql`${schema.notifications.createdAt} + (${schema.notifications.expirationHours} * INTERVAL '1 hour')`,
+          this.db.sql`${schema.notifications.createdAt} + (${schema.notifications.expirationHours} * interval '1 hour')`,
           now
         )
       ),
