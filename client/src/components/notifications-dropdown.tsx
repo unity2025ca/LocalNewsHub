@@ -26,13 +26,26 @@ export function NotificationsDropdown() {
 
   const { data: notifications = [] } = useQuery<Notification[]>({
     queryKey: ["/api/notifications"],
+    refetchInterval: 5000, // تحديث كل 5 ثوان
     onSuccess: (data) => {
-      // If there are new notifications since last visit, reset the viewed state
-      const lastNotificationCount = parseInt(localStorage.getItem('lastNotificationCount') || '0');
-      if (data.length > lastNotificationCount) {
+      // التحقق من وجود إشعارات جديدة بناءً على آخر وقت تحقق
+      const lastCheckTime = parseInt(localStorage.getItem('lastNotificationCheckTime') || '0');
+      const currentTime = Date.now();
+      
+      // البحث عن إشعارات جديدة (تم إنشاؤها بعد آخر فحص)
+      const newNotifications = data.filter(notification => {
+        const notificationTime = new Date(notification.createdAt).getTime();
+        return notificationTime > lastCheckTime;
+      });
+      
+      // إذا كان هناك إشعارات جديدة، أعد تعيين حالة العرض
+      if (newNotifications.length > 0) {
         setHasOpened(false);
         localStorage.setItem('hasViewedNotifications', 'false');
       }
+      
+      // تحديث وقت آخر فحص
+      localStorage.setItem('lastNotificationCheckTime', currentTime.toString());
       localStorage.setItem('lastNotificationCount', data.length.toString());
     }
   });
