@@ -24,7 +24,31 @@ import React, { useState } from 'react';
 const NotificationsDropdown = ({ notifications }: { notifications: Notification[] }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [readStatus, setReadStatus] = useState<{[key: number]: boolean}>({});
-
+  const [lastNotificationCount, setLastNotificationCount] = useState(0);
+  
+  // Check for new notifications when notifications array changes
+  React.useEffect(() => {
+    // Get the stored notification IDs
+    const storedNotificationIds = JSON.parse(localStorage.getItem('notificationIds') || '[]');
+    
+    // Find new notifications that don't exist in stored IDs
+    const newNotifications = notifications.filter(
+      notification => !storedNotificationIds.includes(notification.id)
+    );
+    
+    // If there are new notifications, reset read status
+    if (newNotifications.length > 0) {
+      setReadStatus({});
+      
+      // Update stored notification IDs
+      const newIds = notifications.map(notification => notification.id);
+      localStorage.setItem('notificationIds', JSON.stringify(newIds));
+    }
+    
+    // Update last notification count
+    setLastNotificationCount(notifications.length);
+  }, [notifications]);
+  
   // Handle opening the dropdown - mark all as read when opened
   const handleToggle = () => {
     const newIsOpen = !isOpen;
@@ -38,7 +62,7 @@ const NotificationsDropdown = ({ notifications }: { notifications: Notification[
       });
       setReadStatus(newReadStatus);
       
-      // Reset notification counter in local storage
+      // Save notification state to localStorage
       localStorage.setItem('hasViewedNotifications', 'true');
     }
   };
