@@ -50,6 +50,26 @@ async function updateDatabase() {
       console.log("Email column already exists.");
     }
     
+    // Check if expiration_hours column exists
+    console.log("Checking if expiration_hours column exists...");
+    const expirationHoursCheck = await sql`
+      SELECT column_name 
+      FROM information_schema.columns 
+      WHERE table_name = 'notifications' AND column_name = 'expiration_hours';
+    `;
+    
+    if (expirationHoursCheck.length === 0) {
+      console.log("Adding expiration_hours column to notifications table...");
+      
+      // Add expiration_hours column if it doesn't exist
+      await sql`
+        ALTER TABLE notifications 
+        ADD COLUMN expiration_hours INTEGER;
+      `;
+    } else {
+      console.log("expiration_hours column already exists.");
+    }
+    
     console.log("Database updated successfully");
     process.exit(0);
   } catch (error) {
