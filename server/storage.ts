@@ -3,7 +3,7 @@ import session from "express-session";
 import createMemoryStore from "memorystore";
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
-import { eq, or, isNull, gt } from "drizzle-orm";
+import { eq, or, isNull, gt, and, not } from "drizzle-orm";
 import * as schema from "../shared/schema";
 
 const MemoryStore = createMemoryStore(session);
@@ -157,9 +157,12 @@ export class PostgresStorage implements IStorage {
     return this.db.query.notifications.findMany({
       where: or(
         isNull(schema.notifications.expirationHours),
-        gt(
-          schema.notifications.createdAt,
-          new Date(now.getTime() - (schema.notifications.expirationHours || 0) * 3600000)
+        and(
+          not(isNull(schema.notifications.expirationHours)),
+          gt(
+            schema.notifications.createdAt,
+            new Date(now.getTime() - 3600000 * 24)  // قارن مع 24 ساعة ماضية كحل مؤقت
+          )
         )
       ),
       orderBy: (notifications, { desc }) => [desc(notifications.createdAt)],
