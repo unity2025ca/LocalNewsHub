@@ -22,6 +22,15 @@ async function createAdmin() {
       password: hashedPassword
     });
     
+    // Manually update isAdmin if needed
+    if (!admin.isAdmin) {
+      await storage.db.update(storage.db.schema.users)
+        .set({ isAdmin: true })
+        .where(storage.db.schema.users.id.equals(admin.id))
+        .execute();
+      console.log("Admin privileges granted.");
+    }
+    
     console.log("Admin user created successfully:", admin);
     process.exit(0);
   } catch (error) {
