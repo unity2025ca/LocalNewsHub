@@ -22,12 +22,14 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 export function NotificationsDropdown() {
   const [open, setOpen] = useState(false);
   const [readNotifications, setReadNotifications] = useState<Set<number>>(new Set());
+  const [hasOpened, setHasOpened] = useState(false);
 
   const { data: notifications = [] } = useQuery<Notification[]>({
     queryKey: ["/api/notifications"],
   });
 
-  const unreadCount = notifications.length - readNotifications.size;
+  // Only count as unread if notification hasn't been read AND dropdown hasn't been opened
+  const unreadCount = hasOpened ? 0 : (notifications.length - readNotifications.size);
 
   const markAsRead = (id: number) => {
     setReadNotifications(prev => new Set([...prev, id]));
@@ -37,9 +39,17 @@ export function NotificationsDropdown() {
     const allIds = notifications.map(n => n.id);
     setReadNotifications(new Set(allIds));
   };
+  
+  // When dropdown opens, mark as "opened" to remove the red badge
+  const handleOpenChange = (newOpen: boolean) => {
+    setOpen(newOpen);
+    if (newOpen) {
+      setHasOpened(true);
+    }
+  };
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         <Button variant="outline" size="icon" className="relative">
           <Bell className="h-5 w-5" />
