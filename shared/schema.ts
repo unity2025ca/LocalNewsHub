@@ -5,6 +5,7 @@ import { z } from "zod";
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
+  email: text("email").notNull().unique(),
   password: text("password").notNull(),
   isAdmin: boolean("is_admin").notNull().default(false),
 });
@@ -61,6 +62,7 @@ export const initializeDatabase = async (sql: any) => {
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
         username TEXT NOT NULL UNIQUE,
+        email TEXT NOT NULL UNIQUE,
         password TEXT NOT NULL,
         is_admin BOOLEAN NOT NULL DEFAULT FALSE
       )
@@ -144,10 +146,27 @@ export const initializeDatabase = async (sql: any) => {
   }
 };
 
-export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  password: true,
-});
+import { z } from "zod";
+
+export const insertUserSchema = createInsertSchema(users)
+  .pick({
+    username: true,
+    email: true,
+    password: true,
+  })
+  .extend({
+    username: z
+      .string()
+      .min(6, "يجب أن يكون اسم المستخدم 6 أحرف على الأقل")
+      .regex(/^[a-zA-Z0-9_]+$/, "يجب أن يحتوي اسم المستخدم على أحرف إنجليزية وأرقام فقط"),
+    email: z
+      .string()
+      .email("يرجى إدخال بريد إلكتروني صحيح"),
+    password: z
+      .string()
+      .min(6, "يجب أن تكون كلمة المرور 6 أحرف على الأقل")
+      .regex(/^[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+$/, "يجب أن تحتوي كلمة المرور على أحرف إنجليزية وأرقام ورموز فقط"),
+  });
 
 export const updatePasswordSchema = z.object({
   password: z.string().min(1, "Password is required"),

@@ -40,6 +40,7 @@ export default function AuthPage() {
     resolver: zodResolver(insertUserSchema),
     defaultValues: {
       username: "",
+      email: "",
       password: "",
     },
   });
@@ -137,9 +138,22 @@ export default function AuthPage() {
                       name="username"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Username</FormLabel>
+                          <FormLabel>اسم المستخدم</FormLabel>
                           <FormControl>
-                            <Input placeholder="Choose username" {...field} />
+                            <Input placeholder="اختر اسم مستخدم (أحرف إنجليزية فقط)" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={registerForm.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>البريد الإلكتروني</FormLabel>
+                          <FormControl>
+                            <Input type="email" placeholder="أدخل بريدك الإلكتروني" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -150,9 +164,9 @@ export default function AuthPage() {
                       name="password"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Password</FormLabel>
+                          <FormLabel>كلمة المرور</FormLabel>
                           <FormControl>
-                            <Input type="password" placeholder="Choose password" {...field} />
+                            <Input type="password" placeholder="اختر كلمة مرور (أحرف إنجليزية فقط)" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
