@@ -1,10 +1,9 @@
-
 import { News, Notification, User, Weather, InsertUser, ThemeSettings, InsertNews, InsertNotification, InsertWeather, AdSettings } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
-import { eq } from "drizzle-orm";
+import { eq, or, isNull, gt } from "drizzle-orm";
 import * as schema from "../shared/schema";
 
 const MemoryStore = createMemoryStore(session);
@@ -27,6 +26,7 @@ export interface IStorage {
   // Notification operations
   createNotification(notification: InsertNotification): Promise<Notification>;
   getAllNotifications(): Promise<Notification[]>;
+  getActiveNotifications(): Promise<Notification[]>;
 
   // Weather operations
   updateWeather(weather: InsertWeather): Promise<Weather>;
@@ -51,10 +51,10 @@ export class PostgresStorage implements IStorage {
     if (!process.env.DATABASE_URL) {
       throw new Error("DATABASE_URL environment variable is required");
     }
-    
+
     const sql = neon(process.env.DATABASE_URL);
     this.db = drizzle(sql, { schema });
-    
+
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000,
     });
@@ -78,14 +78,14 @@ export class PostgresStorage implements IStorage {
     // Check if this is the first user to make them admin
     const allUsers = await this.db.query.users.findMany();
     const isFirstUser = allUsers.length === 0;
-    
+
     const [user] = await this.db.insert(schema.users)
       .values({
         ...insertUser,
         isAdmin: isFirstUser
       })
       .returning();
-      
+
     return user;
   }
 
@@ -111,7 +111,7 @@ export class PostgresStorage implements IStorage {
         createdAt: new Date()
       })
       .returning();
-      
+
     return newsItem;
   }
 
@@ -141,21 +141,31 @@ export class PostgresStorage implements IStorage {
         createdAt: new Date()
       })
       .returning();
-      
+
     return notificationItem;
   }
 
   async getAllNotifications(): Promise<Notification[]> {
-    const allNotifications = await this.db.query.notifications.findMany();
-    return allNotifications.sort((a, b) => 
-      b.createdAt.getTime() - a.createdAt.getTime()
-    );
+    return this.db.query.notifications.findMany({
+      orderBy: (notifications, { desc }) => [desc(notifications.createdAt)],
+    });
+  }
+
+  async getActiveNotifications(): Promise<Notification[]> {
+    const now = new Date();
+    return this.db.query.notifications.findMany({
+      where: or(
+        isNull(schema.notifications.expiresAt),
+        gt(schema.notifications.expiresAt, now)
+      ),
+      orderBy: (notifications, { desc }) => [desc(notifications.createdAt)],
+    });
   }
 
   async updateWeather(weather: InsertWeather): Promise<Weather> {
     // First check if a weather record exists
     const existingWeather = await this.db.query.weather.findMany();
-    
+
     if (existingWeather.length > 0) {
       // Update existing record
       const [weatherUpdate] = await this.db.update(schema.weather)
@@ -165,7 +175,7 @@ export class PostgresStorage implements IStorage {
         })
         .where(eq(schema.weather.id, existingWeather[0].id))
         .returning();
-      
+
       return weatherUpdate;
     } else {
       // Create new record
@@ -175,7 +185,7 @@ export class PostgresStorage implements IStorage {
           date: new Date()
         })
         .returning();
-        
+
       return weatherUpdate;
     }
   }
@@ -190,7 +200,7 @@ export class PostgresStorage implements IStorage {
   async updateThemeSettings(settings: Omit<ThemeSettings, "id" | "updatedAt">): Promise<ThemeSettings> {
     // Check if theme settings exist
     const existingSettings = await this.db.query.themeSettings.findMany();
-    
+
     if (existingSettings.length > 0) {
       // Update existing record
       const [themeUpdate] = await this.db.update(schema.themeSettings)
@@ -200,7 +210,7 @@ export class PostgresStorage implements IStorage {
         })
         .where(eq(schema.themeSettings.id, existingSettings[0].id))
         .returning();
-      
+
       return themeUpdate;
     } else {
       // Create new record
@@ -210,7 +220,7 @@ export class PostgresStorage implements IStorage {
           updatedAt: new Date()
         })
         .returning();
-        
+
       return themeUpdate;
     }
   }
@@ -223,7 +233,7 @@ export class PostgresStorage implements IStorage {
   async updateAdSettings(settings: Omit<AdSettings, "id" | "updatedAt">): Promise<AdSettings> {
     // Check if ad settings exist
     const existingSettings = await this.db.query.adSettings.findMany();
-    
+
     if (existingSettings.length > 0) {
       // Update existing record
       const [adUpdate] = await this.db.update(schema.adSettings)
@@ -233,7 +243,7 @@ export class PostgresStorage implements IStorage {
         })
         .where(eq(schema.adSettings.id, existingSettings[0].id))
         .returning();
-      
+
       return adUpdate;
     } else {
       // Create new record
@@ -243,7 +253,7 @@ export class PostgresStorage implements IStorage {
           updatedAt: new Date()
         })
         .returning();
-        
+
       return adUpdate;
     }
   }

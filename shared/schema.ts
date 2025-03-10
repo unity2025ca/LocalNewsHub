@@ -24,6 +24,7 @@ export const notifications = pgTable("notifications", {
   title: text("title").notNull(),
   message: text("message").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
+  expiresAt: timestamp("expires_at"),
 });
 
 export const weather = pgTable("weather", {
@@ -100,8 +101,23 @@ export const initializeDatabase = async (sql: any) => {
         id SERIAL PRIMARY KEY,
         title TEXT NOT NULL,
         message TEXT NOT NULL,
-        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        expires_at TIMESTAMP
       )
+    `;
+    
+    // Add expires_at column if it doesn't exist
+    await sql`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns 
+          WHERE table_name = 'notifications' AND column_name = 'expires_at'
+        ) THEN
+          ALTER TABLE notifications ADD COLUMN expires_at TIMESTAMP;
+        END IF;
+      END
+      $$;
     `;
     
     // Create weather table
@@ -181,6 +197,7 @@ export const insertNewsSchema = createInsertSchema(news).pick({
 export const insertNotificationSchema = createInsertSchema(notifications).pick({
   title: true,
   message: true,
+  expiresAt: true,
 });
 
 export const insertWeatherSchema = createInsertSchema(weather).pick({

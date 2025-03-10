@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel,FormMessage, FormDescription } from "@/components/ui/form";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import {
@@ -54,6 +54,7 @@ export default function AdminPage() {
     defaultValues: {
       title: "",
       message: "",
+      expiresAt: ""
     },
   });
 
@@ -259,6 +260,31 @@ export default function AdminPage() {
                             <FormControl>
                               <Textarea placeholder="Notification message..." className="min-h-[100px]" {...field} />
                             </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={notificationForm.control}
+                        name="expiresAt"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Expiration Date (Optional)</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="datetime-local" 
+                                {...field} 
+                                onChange={(e) => {
+                                  const value = e.target.value ? new Date(e.target.value).toISOString() : "";
+                                  field.onChange(value);
+                                }}
+                                value={field.value ? new Date(field.value).toISOString().slice(0, 16) : ""}
+                              />
+                            </FormControl>
+                            <FormDescription>
+                              Set when this notification should expire and be removed automatically. Leave empty for no expiration.
+                            </FormDescription>
+                            <FormMessage />
                           </FormItem>
                         )}
                       />

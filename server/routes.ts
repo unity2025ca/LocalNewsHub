@@ -146,7 +146,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(401).send("Must be logged in to view notifications");
     }
 
-    const notifications = await storage.getAllNotifications();
+    const notifications = await storage.getActiveNotifications();
     res.json(notifications);
   });
 
