@@ -157,15 +157,15 @@ export const insertUserSchema = createInsertSchema(users)
   .extend({
     username: z
       .string()
-      .min(6, "يجب أن يكون اسم المستخدم 6 أحرف على الأقل")
-      .regex(/^[a-zA-Z0-9_]+$/, "يجب أن يحتوي اسم المستخدم على أحرف إنجليزية وأرقام فقط"),
+      .min(6, "Username must be at least 6 characters")
+      .regex(/^[a-zA-Z0-9_]+$/, "Username must contain only English letters, numbers, and underscores"),
     email: z
       .string()
-      .email("يرجى إدخال بريد إلكتروني صحيح"),
+      .email("Please enter a valid email address"),
     password: z
       .string()
-      .min(6, "يجب أن تكون كلمة المرور 6 أحرف على الأقل")
-      .regex(/^[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+$/, "يجب أن تحتوي كلمة المرور على أحرف إنجليزية وأرقام ورموز فقط"),
+      .min(6, "Password must be at least 6 characters")
+      .regex(/^[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+$/, "Password must contain only English letters, numbers, and symbols"),
   });
 
 export const updatePasswordSchema = z.object({
