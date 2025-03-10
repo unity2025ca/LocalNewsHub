@@ -23,22 +23,48 @@ import React, { useState } from 'react';
 // New component for the notifications dropdown
 const NotificationsDropdown = ({ notifications }: { notifications: Notification[] }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [readStatus, setReadStatus] = useState<{[key: number]: boolean}>({});
+
+  // Handle opening the dropdown - mark all as read when opened
+  const handleToggle = () => {
+    const newIsOpen = !isOpen;
+    setIsOpen(newIsOpen);
+    
+    // If opening the dropdown, mark all as read
+    if (newIsOpen) {
+      const newReadStatus: {[key: number]: boolean} = {};
+      notifications.forEach(notification => {
+        newReadStatus[notification.id] = true;
+      });
+      setReadStatus(newReadStatus);
+      
+      // Reset notification counter in local storage
+      localStorage.setItem('hasViewedNotifications', 'true');
+    }
+  };
+
+  // Count unread notifications (those not in the readStatus object)
+  const unreadCount = notifications.filter(n => !readStatus[n.id]).length;
 
   return (
     <div className="relative">
-      <Button onClick={() => setIsOpen(!isOpen)} variant="ghost" size="sm">
+      <Button onClick={handleToggle} variant="ghost" size="sm">
         <MessageSquare className="h-4 w-4 mr-2" />
-        Notifications {notifications?.length > 0 && <span className="bg-red-500 text-white text-xs rounded-full px-1 ml-1">{notifications.filter(n => !n.isRead).length}</span>}
+        Notifications {unreadCount > 0 && <span className="bg-red-500 text-white text-xs rounded-full px-1 ml-1">{unreadCount}</span>}
       </Button>
       {isOpen && (
         <div className="absolute right-0 mt-2 py-2 w-48 bg-white rounded-md shadow-lg">
-          <div className="max-h-48 overflow-y-auto"> {/* Added ScrollArea functionality */}
-            {notifications.map((notification) => (
-              <div key={notification.id} className="p-2 border-b">
-                <p className="text-sm">{notification.title}</p>
-                <p className="text-xs text-gray-500">{notification.message}</p>
-              </div>
-            ))}
+          <div className="max-h-48 overflow-y-auto">
+            {notifications.length > 0 ? (
+              notifications.map((notification) => (
+                <div key={notification.id} className="p-2 border-b">
+                  <p className="text-sm">{notification.title}</p>
+                  <p className="text-xs text-gray-500">{notification.message}</p>
+                </div>
+              ))
+            ) : (
+              <div className="p-2 text-center text-gray-500">No notifications</div>
+            )}
           </div>
         </div>
       )}
