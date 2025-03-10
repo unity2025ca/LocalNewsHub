@@ -155,8 +155,11 @@ export class PostgresStorage implements IStorage {
     const now = new Date();
     return this.db.query.notifications.findMany({
       where: or(
-        isNull(schema.notifications.expiresAt),
-        gt(schema.notifications.expiresAt, now)
+        isNull(schema.notifications.expirationHours),
+        gt(
+          sql`${schema.notifications.createdAt} + (${schema.notifications.expirationHours} * INTERVAL '1 hour')`,
+          now
+        )
       ),
       orderBy: (notifications, { desc }) => [desc(notifications.createdAt)],
     });

@@ -266,23 +266,24 @@ export default function AdminPage() {
                       />
                       <FormField
                         control={notificationForm.control}
-                        name="expiresAt"
+                        name="expirationHours"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Expiration Date (Optional)</FormLabel>
+                            <FormLabel>Expiration Hours (Optional)</FormLabel>
                             <FormControl>
                               <Input 
-                                type="datetime-local" 
+                                type="number" 
+                                min="1"
+                                placeholder="Hours until expiration"
                                 {...field} 
                                 onChange={(e) => {
-                                  const value = e.target.value ? new Date(e.target.value).toISOString() : "";
+                                  const value = e.target.value ? parseInt(e.target.value) : undefined;
                                   field.onChange(value);
                                 }}
-                                value={field.value ? new Date(field.value).toISOString().slice(0, 16) : ""}
                               />
                             </FormControl>
                             <FormDescription>
-                              Set when this notification should expire and be removed automatically. Leave empty for no expiration.
+                              Set how many hours this notification should be visible before being removed automatically. Leave empty for no expiration.
                             </FormDescription>
                             <FormMessage />
                           </FormItem>

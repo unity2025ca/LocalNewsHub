@@ -24,7 +24,7 @@ export const notifications = pgTable("notifications", {
   title: text("title").notNull(),
   message: text("message").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-  expiresAt: timestamp("expires_at"),
+  expirationHours: integer("expiration_hours"),
 });
 
 export const weather = pgTable("weather", {
@@ -68,7 +68,7 @@ export const initializeDatabase = async (sql: any) => {
         is_admin BOOLEAN NOT NULL DEFAULT FALSE
       )
     `;
-    
+
     // Create news table
     await sql`
       CREATE TABLE IF NOT EXISTS news (
@@ -80,7 +80,7 @@ export const initializeDatabase = async (sql: any) => {
         created_at TIMESTAMP NOT NULL DEFAULT NOW()
       )
     `;
-    
+
     // Add foreign key constraint after table creation
     await sql`
       DO $$
@@ -94,7 +94,7 @@ export const initializeDatabase = async (sql: any) => {
       END
       $$;
     `;
-    
+
     // Create notifications table
     await sql`
       CREATE TABLE IF NOT EXISTS notifications (
@@ -105,7 +105,7 @@ export const initializeDatabase = async (sql: any) => {
         expires_at TIMESTAMP
       )
     `;
-    
+
     // Add expires_at column if it doesn't exist
     await sql`
       DO $$
@@ -119,7 +119,7 @@ export const initializeDatabase = async (sql: any) => {
       END
       $$;
     `;
-    
+
     // Create weather table
     await sql`
       CREATE TABLE IF NOT EXISTS weather (
@@ -129,7 +129,7 @@ export const initializeDatabase = async (sql: any) => {
         date TIMESTAMP NOT NULL DEFAULT NOW()
       )
     `;
-    
+
     // Create theme_settings table
     await sql`
       CREATE TABLE IF NOT EXISTS theme_settings (
@@ -141,7 +141,7 @@ export const initializeDatabase = async (sql: any) => {
         updated_at TIMESTAMP NOT NULL DEFAULT NOW()
       )
     `;
-    
+
     // Create ad_settings table
     await sql`
       CREATE TABLE IF NOT EXISTS ad_settings (
@@ -154,7 +154,7 @@ export const initializeDatabase = async (sql: any) => {
         updated_at TIMESTAMP NOT NULL DEFAULT NOW()
       )
     `;
-    
+
     console.log('Database tables created or already exist');
   } catch (error) {
     console.error('Error creating database tables:', error);
@@ -197,7 +197,7 @@ export const insertNewsSchema = createInsertSchema(news).pick({
 export const insertNotificationSchema = createInsertSchema(notifications).pick({
   title: true,
   message: true,
-  expiresAt: true,
+  expirationHours: true,
 });
 
 export const insertWeatherSchema = createInsertSchema(weather).pick({
