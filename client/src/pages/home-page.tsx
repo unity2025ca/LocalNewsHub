@@ -23,52 +23,51 @@ import React, { useState } from 'react';
 // New component for the notifications dropdown
 const NotificationsDropdown = ({ notifications }: { notifications: Notification[] }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [readStatus, setReadStatus] = useState<{[key: number]: boolean}>({});
-  const [lastNotificationCount, setLastNotificationCount] = useState(0);
+  const [viewedNotifications, setViewedNotifications] = useState<Set<number>>(new Set());
+  const [lastViewTime, setLastViewTime] = useState<number>(
+    // Get last view time from localStorage or default to current time
+    parseInt(localStorage.getItem('lastNotificationViewTime') || Date.now().toString())
+  );
   
-  // Check for new notifications when notifications array changes
-  React.useEffect(() => {
-    // Get the stored notification IDs
-    const storedNotificationIds = JSON.parse(localStorage.getItem('notificationIds') || '[]');
-    
-    // Find new notifications that don't exist in stored IDs
-    const newNotifications = notifications.filter(
-      notification => !storedNotificationIds.includes(notification.id)
-    );
-    
-    // If there are new notifications, reset read status
-    if (newNotifications.length > 0) {
-      setReadStatus({});
-      
-      // Update stored notification IDs
-      const newIds = notifications.map(notification => notification.id);
-      localStorage.setItem('notificationIds', JSON.stringify(newIds));
-    }
-    
-    // Update last notification count
-    setLastNotificationCount(notifications.length);
-  }, [notifications]);
+  // Track which notifications are new (arrived after last view)
+  const newNotifications = React.useMemo(() => {
+    return notifications.filter(notification => {
+      const notificationTime = new Date(notification.createdAt).getTime();
+      return notificationTime > lastViewTime;
+    });
+  }, [notifications, lastViewTime]);
   
-  // Handle opening the dropdown - mark all as read when opened
+  // Mark specific notification as viewed
+  const markAsViewed = (notificationId: number) => {
+    setViewedNotifications(prev => {
+      const newSet = new Set(prev);
+      newSet.add(notificationId);
+      return newSet;
+    });
+  };
+  
+  // Handle opening the dropdown
   const handleToggle = () => {
     const newIsOpen = !isOpen;
     setIsOpen(newIsOpen);
     
-    // If opening the dropdown, mark all as read
+    // If opening the dropdown, update the last view time
     if (newIsOpen) {
-      const newReadStatus: {[key: number]: boolean} = {};
-      notifications.forEach(notification => {
-        newReadStatus[notification.id] = true;
-      });
-      setReadStatus(newReadStatus);
+      const currentTime = Date.now();
+      setLastViewTime(currentTime);
+      localStorage.setItem('lastNotificationViewTime', currentTime.toString());
       
-      // Save notification state to localStorage
-      localStorage.setItem('hasViewedNotifications', 'true');
+      // Mark all current notifications as viewed
+      const newViewedSet = new Set(viewedNotifications);
+      newNotifications.forEach(notification => {
+        newViewedSet.add(notification.id);
+      });
+      setViewedNotifications(newViewedSet);
     }
   };
 
-  // Count unread notifications (those not in the readStatus object)
-  const unreadCount = notifications.filter(n => !readStatus[n.id]).length;
+  // Count unread notifications (only those that arrived after last view and haven't been individually viewed)
+  const unreadCount = newNotifications.filter(n => !viewedNotifications.has(n.id)).length;
 
   return (
     <div className="relative">
