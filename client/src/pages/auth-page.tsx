@@ -29,7 +29,7 @@ export default function AuthPage() {
   const [, navigate] = useLocation();
 
   const loginForm = useForm({
-    resolver: zodResolver(insertUserSchema),
+    resolver: zodResolver(insertUserSchema.pick({ username: true, password: true })),
     defaultValues: {
       username: "",
       password: "",
@@ -101,6 +101,65 @@ export default function AuthPage() {
                         </FormItem>
                       )}
                     />
+
+              <TabsContent value="register">
+                <Form {...registerForm}>
+                  <form
+                    onSubmit={registerForm.handleSubmit((data) =>
+                      registerMutation.mutate(data)
+                    )}
+                    className="space-y-4"
+                  >
+                    <FormField
+                      control={registerForm.control}
+                      name="username"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Username</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter username (English characters only)" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={registerForm.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email</FormLabel>
+                          <FormControl>
+                            <Input type="email" placeholder="Enter your email address" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={registerForm.control}
+                      name="password"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Password</FormLabel>
+                          <FormControl>
+                            <Input type="password" placeholder="Choose a password (English characters only)" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <Button
+                      type="submit"
+                      className="w-full"
+                      disabled={registerMutation.isPending}
+                    >
+                      {registerMutation.isPending ? "Creating account..." : "Create Account"}
+                    </Button>
+                  </form>
+                </Form>
+              </TabsContent>
+
                     <FormField
                       control={loginForm.control}
                       name="password"
@@ -164,9 +223,9 @@ export default function AuthPage() {
                       name="password"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>كلمة المرور</FormLabel>
+                          <FormLabel>Password</FormLabel>
                           <FormControl>
-                            <Input type="password" placeholder="اختر كلمة مرور (أحرف إنجليزية فقط)" {...field} />
+                            <Input type="password" placeholder="Choose a password (English characters only)" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
