@@ -26,9 +26,26 @@ export function NotificationsDropdown() {
 
   const { data: notifications = [] } = useQuery<Notification[]>({
     queryKey: ["/api/notifications"],
+    onSuccess: (data) => {
+      // If there are new notifications since last visit, reset the viewed state
+      const lastNotificationCount = parseInt(localStorage.getItem('lastNotificationCount') || '0');
+      if (data.length > lastNotificationCount) {
+        setHasOpened(false);
+        localStorage.setItem('hasViewedNotifications', 'false');
+      }
+      localStorage.setItem('lastNotificationCount', data.length.toString());
+    }
   });
 
-  // Only count as unread if notification hasn't been read AND dropdown hasn't been opened
+  // Store the hasOpened state in localStorage to persist across page reloads
+  React.useEffect(() => {
+    const hasViewedNotifications = localStorage.getItem('hasViewedNotifications') === 'true';
+    if (hasViewedNotifications) {
+      setHasOpened(true);
+    }
+  }, []);
+
+  // Count unread notifications
   const unreadCount = hasOpened ? 0 : (notifications.length - readNotifications.size);
 
   const markAsRead = (id: number) => {
@@ -45,6 +62,8 @@ export function NotificationsDropdown() {
     setOpen(newOpen);
     if (newOpen) {
       setHasOpened(true);
+      // Save to localStorage to persist across page reloads
+      localStorage.setItem('hasViewedNotifications', 'true');
     }
   };
 
