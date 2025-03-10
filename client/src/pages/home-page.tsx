@@ -28,7 +28,7 @@ const NotificationsDropdown = ({ notifications }: { notifications: Notification[
     <div className="relative">
       <Button onClick={() => setIsOpen(!isOpen)} variant="ghost" size="sm">
         <MessageSquare className="h-4 w-4 mr-2" />
-        Notifications {notifications.length > 0 && <span className="bg-red-500 text-white text-xs rounded-full px-1 ml-1">{notifications.filter(n => !n.isRead).length}</span>}
+        Notifications {notifications?.length > 0 && <span className="bg-red-500 text-white text-xs rounded-full px-1 ml-1">{notifications.filter(n => !n.isRead).length}</span>}
       </Button>
       {isOpen && (
         <div className="absolute right-0 mt-2 py-2 w-48 bg-white rounded-md shadow-lg">
@@ -57,6 +57,7 @@ export default function HomePage() {
 
   const { data: notifications } = useQuery<Notification[]>({
     queryKey: ["/api/notifications"],
+    refetchInterval: 5000, // Refresh every 5 seconds
   });
 
   const { data: weather } = useQuery<Weather>({
