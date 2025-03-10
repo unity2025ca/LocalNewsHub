@@ -153,11 +153,13 @@ export class PostgresStorage implements IStorage {
 
   async getActiveNotifications(): Promise<Notification[]> {
     const now = new Date();
+    const sql = this.db.select().from(schema.notifications);
+    
     return this.db.query.notifications.findMany({
       where: or(
         isNull(schema.notifications.expirationHours),
         gt(
-          this.db.sql`${schema.notifications.createdAt} + (${schema.notifications.expirationHours} * interval '1 hour')`,
+          schema.notifications.createdAt,
           now
         )
       ),
