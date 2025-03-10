@@ -18,7 +18,34 @@ import {
   Sun,
   Newspaper,
 } from "lucide-react";
-import React from 'react';
+import React, { useState } from 'react';
+
+// New component for the notifications dropdown
+const NotificationsDropdown = ({ notifications }: { notifications: Notification[] }) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <div className="relative">
+      <Button onClick={() => setIsOpen(!isOpen)} variant="ghost" size="sm">
+        <MessageSquare className="h-4 w-4 mr-2" />
+        Notifications {notifications.length > 0 && <span className="bg-red-500 text-white text-xs rounded-full px-1 ml-1">{notifications.filter(n => !n.isRead).length}</span>}
+      </Button>
+      {isOpen && (
+        <div className="absolute right-0 mt-2 py-2 w-48 bg-white rounded-md shadow-lg">
+          <div className="max-h-48 overflow-y-auto"> {/* Added ScrollArea functionality */}
+            {notifications.map((notification) => (
+              <div key={notification.id} className="p-2 border-b">
+                <p className="text-sm">{notification.title}</p>
+                <p className="text-xs text-gray-500">{notification.message}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 
 export default function HomePage() {
   const { user, logoutMutation } = useAuth();
@@ -71,6 +98,7 @@ export default function HomePage() {
                 </Button>
               </Link>
             )}
+            <NotificationsDropdown notifications={notifications || []} /> {/* Added NotificationsDropdown */}
             <Button
               variant="ghost"
               size="sm"
@@ -133,27 +161,7 @@ export default function HomePage() {
               </div>
             </div>
 
-            <div>
-              <h2 className="text-2xl font-bold mb-4">Notifications</h2>
-              <div className="space-y-4">
-                {notifications?.map((notification) => (
-                  <Card key={notification.id}>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <MessageSquare className="h-5 w-5" />
-                        {notification.title}
-                      </CardTitle>
-                      <CardDescription>
-                        {new Date(notification.createdAt).toLocaleString()}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="whitespace-pre-wrap">{notification.message}</p>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
+
           </div>
         </div>
       </main>
